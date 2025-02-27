@@ -1,14 +1,6 @@
 #!/bin/bash
 set -e
 
-# Ensure correct permissions
-echo "Setting correct permissions..."
-if [ ! -z "${UID}" ] && [ ! -z "${GID}" ]; then
-    usermod -o -u "${UID}" openrct2
-    groupmod -o -g "${GID}" openrct2
-    chown -R openrct2:openrct2 /serverdata/serverfiles
-fi
-
 # Ensure save file exists
 SAVE_PATH="/serverdata/serverfiles/saves/${GAME_SAVE_NAME:-docker.sv6}"
 if [ ! -f "$SAVE_PATH" ]; then
@@ -66,14 +58,6 @@ if [ ! -z "${ADMIN_NAME}" ] && [ ! -z "${ADMIN_HASH}" ]; then
         + (if any(.name == $name) | not then [{"name": $name, "hash": $hash}] else [] end)
     ' "$USERS_FILE" > "${USERS_FILE}.tmp" && mv "${USERS_FILE}.tmp" "$USERS_FILE"
 fi
-
-# Ensure proper ownership of generated files
-chown -R openrct2:openrct2 /serverdata/serverfiles
-
-# Ensure log directory exists and is writable
-mkdir -p /serverdata/serverfiles/user-data/logs
-touch /serverdata/serverfiles/user-data/logs/server.log
-chown -R openrct2:openrct2 /serverdata/serverfiles/user-data/logs
 
 echo "Configuration complete, starting OpenRCT2 server..."
 cd /serverdata/serverfiles/saves

@@ -19,36 +19,47 @@ RUN git -c http.sslVerify=false clone --depth 1 -b $OPENRCT2_REF https://github.
 
 # Build runtime image
 FROM ubuntu:24.04
-# Install OpenRCT2
+
+ENV USER=container \
+    HOME=/home/container \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install OpenRCT2 and dependencies
 COPY --from=build-env /openrct2-install /openrct2-install
 RUN apt-get update \
  && apt-get install --no-install-recommends -y rsync ca-certificates libpng16-16 libzip4 libcurl4 libfreetype6 libfontconfig1 libicu74 jq curl \
  && rm -rf /var/lib/apt/lists/* \
  && rsync -a /openrct2-install/* / \
  && rm -rf /openrct2-install \
- && openrct2-cli --version
-
-# Set up user and directories
-RUN useradd -m -d /home/openrct2 openrct2 && \
-    mkdir -p /serverdata/serverfiles/user-data \
-    /serverdata/serverfiles/saves \
-    /serverdata/serverfiles/user-data/logs && \
-    chown -R openrct2:openrct2 /serverdata/serverfiles && \
-    chmod 775 /serverdata/serverfiles
-
-WORKDIR /serverdata/serverfiles
+ && openrct2-cli --version \
+ # Create container user and setup directories with proper permissions
+ && useradd -d /home/container -m container \
+ && mkdir -p /home/container \
+            /serverdata/serverfiles/user-data \
+            /serverdata/serverfiles/saves \
+            /serverdata/serverfiles/user-data/logs \
+ && chown -R container:container /home/container \
+                                /serverdata/serverfiles \
+ && chmod 775 /serverdata/serverfiles \
+ && touch /serverdata/serverfiles/user-data/logs/server.log \
+ && chown container:container /serverdata/serverfiles/user-data/logs/server.log \
+ # Test run and scan
+ && openrct2-cli scan-objects \
+ && chown -R container:container /serverdata
 
 # Copy and setup entrypoint script
-COPY entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh \
+ && chown container:container /entrypoint.sh
 
+# Set working directory
+WORKDIR /home/container
+
+# Expose default port
 EXPOSE 11753
 
-# Test run and scan
-RUN openrct2-cli --version \
- && openrct2-cli scan-objects \
- && touch /serverdata/serverfiles/user-data/logs/server.log \
- && chown openrct2:openrct2 /serverdata/serverfiles/user-data/logs/server.log
+# Switch to container user
+USER container
 
 # Use entrypoint script
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
