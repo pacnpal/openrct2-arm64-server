@@ -22,21 +22,33 @@ FROM ubuntu:24.04
 # Install OpenRCT2
 COPY --from=build-env /openrct2-install /openrct2-install
 RUN apt-get update \
- && apt-get install --no-install-recommends -y rsync ca-certificates libpng16-16 libzip4 libcurl4 libfreetype6 libfontconfig1 libicu74 \
+ && apt-get install --no-install-recommends -y rsync ca-certificates libpng16-16 libzip4 libcurl4 libfreetype6 libfontconfig1 libicu74 jq curl \
  && rm -rf /var/lib/apt/lists/* \
  && rsync -a /openrct2-install/* / \
  && rm -rf /openrct2-install \
  && openrct2-cli --version
 
-# Set up ordinary user
-RUN useradd -m openrct2
-USER openrct2
-WORKDIR /home/openrct2
+# Set up user and directories
+RUN useradd -m -d /home/openrct2 openrct2 && \
+    mkdir -p /serverdata/serverfiles/user-data \
+    /serverdata/serverfiles/saves \
+    /serverdata/serverfiles/user-data/logs && \
+    chown -R openrct2:openrct2 /serverdata/serverfiles && \
+    chmod 775 /serverdata/serverfiles
+
+WORKDIR /serverdata/serverfiles
+
+# Copy and setup entrypoint script
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 11753
 
 # Test run and scan
 RUN openrct2-cli --version \
- && openrct2-cli scan-objects
+ && openrct2-cli scan-objects \
+ && touch /serverdata/serverfiles/user-data/logs/server.log \
+ && chown openrct2:openrct2 /serverdata/serverfiles/user-data/logs/server.log
 
-# Done
-ENTRYPOINT ["openrct2-cli"]
+# Use entrypoint script
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
