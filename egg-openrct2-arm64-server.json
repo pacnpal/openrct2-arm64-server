@@ -2,28 +2,28 @@
     "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
     "meta": {
         "version": "PTDL_v2",
-        "update_url": null
+        "update_url": "https://raw.githubusercontent.com/pacnpal/openrct2-arm64-server/refs/heads/main/egg-openrct2-arm64-server.json"
     },
     "exported_at": "2025-02-27T09:47:56-05:00",
     "name": "OpenRCT2 ARM64 Server",
     "author": "pac@pacnp.al",
-    "description": "OpenRCT2 multiplayer server with Docker (ARM64)",
+    "description": "OpenRCT2 multiplayer server with Docker (ARM64). IMPORTANT: 1) Create a mount in the Pterodactyl panel and map it to /serverdata/serverfiles to manage save files. 2) In the mount configuration, add this egg to the mount to ensure servers created with this egg can access the mounted directory. Your save files will be stored in the 'saves' directory and configuration in 'user-data'.",
     "features": null,
     "docker_images": {
         "pacnpal/openrct2-arm64:latest": "pacnpal/openrct2-arm64:latest"
     },
     "file_denylist": [],
-    "startup": "openrct2-cli host --headless {{GAME_CONFIG}}",
+    "startup": "/usr/local/bin/entrypoint.sh",
     "config": {
         "files": "{\r\n    \"config.ini\": {\r\n        \"parser\": \"ini\",\r\n        \"find\": {\r\n            \"port\": \"{{GAME_PORT}}\",\r\n            \"password\": \"{{GAME_PASSWORD}}\",\r\n            \"server-name\": \"{{SERVER_NAME}}\",\r\n            \"max-players\": \"{{MAX_PLAYERS}}\",\r\n            \"public\": \"{{PUBLIC}}\",\r\n            \"pause-when-no-clients\": \"{{PAUSE_NO_CLIENTS}}\",\r\n            \"log-server-actions\": \"{{LOG_ACTIONS}}\",\r\n            \"autosave-enabled\": \"{{AUTOSAVE_ENABLED}}\",\r\n            \"autosave-interval\": \"{{AUTOSAVE_INTERVAL}}\"\r\n        }\r\n    },\r\n    \"user-data/users.json\": {\r\n        \"parser\": \"json\",\r\n        \"find\": {\r\n            \"admin.name\": \"{{ADMIN_NAME}}\",\r\n            \"admin.hash\": \"{{ADMIN_HASH}}\"\r\n        }\r\n    }\r\n}",
-        "startup": "{\r\n    \"done\": \"Server listening on port\"\r\n}",
+        "startup": "{\r\n    \"done\": \"Configuration complete, starting OpenRCT2 server\"\r\n}",
         "logs": "{\r\n    \"custom\": true,\r\n    \"location\": \"/serverdata/serverfiles/user-data/logs/server.log\"\r\n}",
         "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\nset -e\r\n\r\n# Install jq for JSON processing\r\necho \"Installing jq...\"\r\napt-get update && apt-get install -y jq && apt-get clean\r\n\r\n# Create necessary directories\r\necho \"Creating required directories...\"\r\nmkdir -p \/serverdata\/serverfiles\/user-data\r\nmkdir -p \/serverdata\/serverfiles\/saves\r\nmkdir -p \/serverdata\/serverfiles\/user-data\/logs\r\n\r\n# Ensure correct permissions\r\necho \"Setting correct permissions...\"\r\nchown -R $PUID:$PGID \/serverdata\/serverfiles\r\n\r\n# Download example save file if it doesn't exist\r\nif [ ! -f \/serverdata\/serverfiles\/saves\/example.sv6 ]; then\r\n    echo \"Downloading example save file...\"\r\n    curl -Lo \/serverdata\/serverfiles\/saves\/example.sv6 https:\/\/example.com\/example.sv6\r\nfi\r\n\r\n# Ensure config.ini exists and matches schema\r\nCONFIG_FILE=\"\/serverdata\/serverfiles\/user-data\/config.ini\"\r\necho \"Ensuring config.ini exists and matches schema...\"\r\nif [ ! -f \"$CONFIG_FILE\" ]; then\r\n    echo \"Creating config.ini...\"\r\n    cat <<EOL > \"$CONFIG_FILE\"\r\nport={{GAME_PORT}}\r\npassword={{GAME_PASSWORD}}\r\nserver-name={{SERVER_NAME}}\r\nmax-players={{MAX_PLAYERS}}\r\npublic=1\r\npause-when-no-clients=1\r\nlog-server-actions=0\r\nautosave-enabled=1\r\nautosave-interval=10\r\nEOL\r\nelse\r\n    echo \"Updating existing config.ini...\"\r\n    grep -q '^port=' \"$CONFIG_FILE\" && sed -i \"s\/^port=.*\/port={{GAME_PORT}}\/\" \"$CONFIG_FILE\" || echo \"port={{GAME_PORT}}\" >> \"$CONFIG_FILE\"\r\n    grep -q '^password=' \"$CONFIG_FILE\" && sed -i \"s\/^password=.*\/password={{GAME_PASSWORD}}\/\" \"$CONFIG_FILE\" || echo \"password={{GAME_PASSWORD}}\" >> \"$CONFIG_FILE\"\r\n    grep -q '^server-name=' \"$CONFIG_FILE\" && sed -i \"s\/^server-name=.*\/server-name={{SERVER_NAME}}\/\" \"$CONFIG_FILE\" || echo \"server-name={{SERVER_NAME}}\" >> \"$CONFIG_FILE\"\r\n    grep -q '^max-players=' \"$CONFIG_FILE\" && sed -i \"s\/^max-players=.*\/max-players={{MAX_PLAYERS}}\/\" \"$CONFIG_FILE\" || echo \"max-players={{MAX_PLAYERS}}\" >> \"$CONFIG_FILE\"\r\n    grep -q '^public=' \"$CONFIG_FILE\" && sed -i \"s\/^public=.*\/public=1\/\" \"$CONFIG_FILE\" || echo \"public=1\" >> \"$CONFIG_FILE\"\r\n    grep -q '^pause-when-no-clients=' \"$CONFIG_FILE\" && sed -i \"s\/^pause-when-no-clients=.*\/pause-when-no-clients=1\/\" \"$CONFIG_FILE\" || echo \"pause-when-no-clients=1\" >> \"$CONFIG_FILE\"\r\n    grep -q '^log-server-actions=' \"$CONFIG_FILE\" && sed -i \"s\/^log-server-actions=.*\/log-server-actions=0\/\" \"$CONFIG_FILE\" || echo \"log-server-actions=0\" >> \"$CONFIG_FILE\"\r\n    grep -q '^autosave-enabled=' \"$CONFIG_FILE\" && sed -i \"s\/^autosave-enabled=.*\/autosave-enabled=1\/\" \"$CONFIG_FILE\" || echo \"autosave-enabled=1\" >> \"$CONFIG_FILE\"\r\n    grep -q '^autosave-interval=' \"$CONFIG_FILE\" && sed -i \"s\/^autosave-interval=.*\/autosave-interval=10\/\" \"$CONFIG_FILE\" || echo \"autosave-interval=10\" >> \"$CONFIG_FILE\"\r\nfi\r\n\r\n# Ensure users.json exists and matches schema\r\nUSERS_FILE=\"\/serverdata\/serverfiles\/user-data\/users.json\"\r\necho \"Ensuring users.json exists and matches schema...\"\r\nif [ ! -f \"$USERS_FILE\" ]; then\r\n    echo \"Creating users.json...\"\r\n    cat <<EOL > \"$USERS_FILE\"\r\n[\r\n    {\r\n        \"name\": \"{{ADMIN_NAME}}\",\r\n        \"hash\": \"{{ADMIN_HASH}}\"\r\n    }\r\n]\r\nEOL\r\nelse\r\n    echo \"Updating existing users.json...\"\r\n    # Update or append admin hash for the specified admin name\r\n    TEMP_FILE=\"${USERS_FILE}.tmp\"\r\n    jq --arg name \"{{ADMIN_NAME}}\" --arg hash \"{{ADMIN_HASH}}\" '\r\n        map(if .name == $name then .hash = $hash else . end)\r\n        + (if any(.name == $name) | not then [{\"name\": $name, \"hash\": $hash}] else [] end)\r\n    ' \"$USERS_FILE\" > \"$TEMP_FILE\" && mv \"$TEMP_FILE\" \"$USERS_FILE\"\r\nfi\r\n\r\necho \"Installation complete.\"",
-            "container": "pacnpal/openrct2-arm64",
+            "script": "#!\/bin\/bash\r\nset -e\r\n\r\n# Configuration files will be created by entrypoint.sh\r\necho \"Initial setup complete - configuration will be handled by entrypoint.sh\"\r\n",
+            "container": "pacnpal/openrct2-arm64:latest",
             "entrypoint": "/bin/bash"
         }
     },
