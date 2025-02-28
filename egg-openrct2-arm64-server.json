@@ -7,7 +7,7 @@
     "exported_at": "2025-02-27T09:47:56-05:00",
     "name": "OpenRCT2 ARM64 Server",
     "author": "pac@pacnp.al",
-    "description": "OpenRCT2 multiplayer server with Docker (ARM64). IMPORTANT: 1) Create a mount in the Pterodactyl panel and map it to /serverdata/serverfiles to manage save files. 2) In the mount configuration, add this egg to the mount to ensure servers created with this egg can access the mounted directory. Your save files will be stored in the 'saves' directory and configuration in 'user-data'.",
+    "description": "OpenRCT2 multiplayer server with Docker (ARM64).",
     "features": null,
     "docker_images": {
         "pacnpal/openrct2-arm64:latest": "pacnpal/openrct2-arm64:latest"
@@ -17,7 +17,7 @@
     "config": {
         "files": "{\r\n    \"config.ini\": {\r\n        \"parser\": \"ini\",\r\n        \"find\": {\r\n            \"port\": \"{{GAME_PORT}}\",\r\n            \"password\": \"{{GAME_PASSWORD}}\",\r\n            \"server-name\": \"{{SERVER_NAME}}\",\r\n            \"max-players\": \"{{MAX_PLAYERS}}\",\r\n            \"public\": \"{{PUBLIC}}\",\r\n            \"pause-when-no-clients\": \"{{PAUSE_NO_CLIENTS}}\",\r\n            \"log-server-actions\": \"{{LOG_ACTIONS}}\",\r\n            \"autosave-enabled\": \"{{AUTOSAVE_ENABLED}}\",\r\n            \"autosave-interval\": \"{{AUTOSAVE_INTERVAL}}\"\r\n        }\r\n    },\r\n    \"user-data/users.json\": {\r\n        \"parser\": \"json\",\r\n        \"find\": {\r\n            \"admin.name\": \"{{ADMIN_NAME}}\",\r\n            \"admin.hash\": \"{{ADMIN_HASH}}\"\r\n        }\r\n    }\r\n}",
         "startup": "{\r\n    \"done\": \"Configuration complete, starting OpenRCT2 server\"\r\n}",
-        "logs": "{\r\n    \"custom\": true,\r\n    \"location\": \"/serverdata/serverfiles/user-data/logs/server.log\"\r\n}",
+        "logs": "{\r\n    \"custom\": true,\r\n    \"location\": \"/home/container/serverdata/serverfiles/user-data/logs/server.log\"\r\n}",
         "stop": "^C"
     },
     "scripts": {
@@ -32,7 +32,7 @@
             "name": "Game Config",
             "description": "Command-line startup parameters for the server",
             "env_variable": "GAME_CONFIG",
-            "default_value": "--config-path /serverdata/serverfiles/user-data --save-path /serverdata/serverfiles/saves",
+            "default_value": "--config-path /home/container/serverdata/serverfiles/user-data --save-path /home/container/serverdata/serverfiles/saves",
             "user_viewable": false,
             "user_editable": true,
             "rules": "string|max:256",
@@ -42,7 +42,7 @@
             "name": "Game Save Name",
             "description": "Save game file to load when starting the server",
             "env_variable": "GAME_SAVE_NAME",
-            "default_value": "docker.sv6",
+            "default_value": "docker.park",
             "user_viewable": false,
             "user_editable": true,
             "rules": "required|string|max:256",

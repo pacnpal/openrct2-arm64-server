@@ -35,17 +35,17 @@ RUN apt-get update \
  # Create container user and setup directories with proper permissions
  && useradd -d /home/container -m container \
  && mkdir -p /home/container \
-            /serverdata/serverfiles/user-data \
-            /serverdata/serverfiles/saves \
-            /serverdata/serverfiles/user-data/logs \
+            /home/container/serverdata/serverfiles/user-data \
+            /home/container/serverdata/serverfiles/saves \
+            /home/container/serverdata/serverfiles/user-data/logs \
  && chown -R container:container /home/container \
-                                /serverdata/serverfiles \
- && chmod 775 /serverdata/serverfiles \
- && touch /serverdata/serverfiles/user-data/logs/server.log \
- && chown container:container /serverdata/serverfiles/user-data/logs/server.log \
+                                /home/container/serverdata/serverfiles \
+ && chmod 775 /home/container/serverdata/serverfiles \
+ && touch /home/container/serverdata/serverfiles/user-data/logs/server.log \
+ && chown container:container /home/container/serverdata/serverfiles/user-data/logs/server.log \
  # Test run and scan
  && openrct2-cli scan-objects \
- && chown -R container:container /serverdata
+ && chown -R container:container /home/container/serverdata
 
 # Copy and setup entrypoint script
 COPY entrypoint.sh /entrypoint.sh
@@ -53,7 +53,7 @@ RUN chmod +x /entrypoint.sh \
  && chown container:container /entrypoint.sh
 
 # Set working directory
-WORKDIR /home/container
+WORKDIR /home/container/serverdata
 
 # Expose default port
 EXPOSE 11753

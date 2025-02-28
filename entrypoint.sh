@@ -2,14 +2,14 @@
 set -e
 
 # Ensure save file exists
-SAVE_PATH="/serverdata/serverfiles/saves/${GAME_SAVE_NAME:-docker.sv6}"
+SAVE_PATH="/home/container/serverdata/serverfiles/saves/${GAME_SAVE_NAME:-docker.park}"
 if [ ! -f "$SAVE_PATH" ]; then
     echo "Creating empty save file at $SAVE_PATH..."
     touch "$SAVE_PATH"
 fi
 
 # Update config.ini with environment variables if they are set
-CONFIG_FILE="/serverdata/serverfiles/user-data/config.ini"
+CONFIG_FILE="/home/container/serverdata/serverfiles/user-data/config.ini"
 echo "Checking config.ini configuration..."
 
 # Create config file if it doesn't exist
@@ -43,7 +43,7 @@ update_config() {
 [ ! -z "$AUTOSAVE_INTERVAL" ] && update_config "autosave-interval" "$AUTOSAVE_INTERVAL"
 
 # Ensure users.json exists and matches schema
-USERS_FILE="/serverdata/serverfiles/user-data/users.json"
+USERS_FILE="/home/container/serverdata/serverfiles/user-data/users.json"
 echo "Ensuring users.json exists and matches schema..."
 if [ ! -f "$USERS_FILE" ]; then
     echo "Creating users.json..."
@@ -60,5 +60,5 @@ if [ ! -z "${ADMIN_NAME}" ] && [ ! -z "${ADMIN_HASH}" ]; then
 fi
 
 echo "Configuration complete, starting OpenRCT2 server..."
-cd /serverdata/serverfiles/saves
-exec openrct2-cli host --headless ${GAME_CONFIG} "$SAVE_PATH"
+cd /home/container/serverdata/serverfiles/saves
+exec openrct2-cli host --headless ${GAME_CONFIG:-} "$SAVE_PATH"
