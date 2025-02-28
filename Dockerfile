@@ -56,6 +56,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Install OpenRCT2 and dependencies
 COPY --from=build-env /openrct2-install /openrct2-install
+# Install dependencies and setup OpenRCT2
 RUN apt-get update \
  && apt-get install --no-install-recommends -y \
     ca-certificates \
@@ -69,19 +70,19 @@ RUN apt-get update \
     libzip4 \
     rsync \
  && rm -rf /var/lib/apt/lists/* \
+ # Copy OpenRCT2 files
  && rsync -a /openrct2-install/* / \
  && rm -rf /openrct2-install \
- # Verify OpenRCT2 installation
- && openrct2-cli --version \
- && openrct2-cli scan-objects \
- # Create container user
+ # Create user and setup directories
  && useradd -d /home/container -m container \
- # Setup directories with proper permissions
  && mkdir -p /home/container/serverdata/serverfiles/user-data/logs \
             /home/container/serverdata/serverfiles/saves \
  && touch /home/container/serverdata/serverfiles/user-data/logs/server.log \
  && chown -R container:container /home/container \
- && chmod 775 /home/container/serverdata/serverfiles
+ && chmod 775 /home/container/serverdata/serverfiles \
+ # Verify OpenRCT2 installation as container user
+ && su container -c "openrct2-cli --version" \
+ && su container -c "openrct2-cli scan-objects"
 
 # Copy and setup entrypoint script
 COPY entrypoint.sh /entrypoint.sh
