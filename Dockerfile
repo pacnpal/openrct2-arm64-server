@@ -1,8 +1,6 @@
 # Build OpenRCT2
 FROM ubuntu:24.04 AS build-env
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Install build dependencies
 RUN apt-get update \
  && apt-get install --no-install-recommends -y \
     clang \
@@ -23,15 +21,9 @@ RUN apt-get update \
     pkg-config \
  && rm -rf /var/lib/apt/lists/*
 
-# Clone and build OpenRCT2
 ARG OPENRCT2_REF=master
-ARG OPENRCT2_COMMIT_SHA
 WORKDIR /openrct2
 RUN git -c http.sslVerify=false clone --depth 1 -b "$OPENRCT2_REF" https://github.com/OpenRCT2/OpenRCT2 . \
- && if [ ! -z "$OPENRCT2_COMMIT_SHA" ]; then \
-      echo "Verifying commit SHA: $OPENRCT2_COMMIT_SHA" && \
-      [ "$(git rev-parse HEAD)" = "$OPENRCT2_COMMIT_SHA" ]; \
-    fi \
  && mkdir build \
  && cd build \
  && cmake .. \
@@ -49,14 +41,12 @@ RUN git -c http.sslVerify=false clone --depth 1 -b "$OPENRCT2_REF" https://githu
 # Build runtime image
 FROM ubuntu:24.04
 
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive \
-    USER=container \
-    HOME=/home/container
+ENV USER=container \
+    HOME=/home/container \
+    DEBIAN_FRONTEND=noninteractive
 
 # Install OpenRCT2 and dependencies
 COPY --from=build-env /openrct2-install /openrct2-install
-# Install dependencies and setup OpenRCT2
 RUN apt-get update \
  && apt-get install --no-install-recommends -y \
     ca-certificates \
@@ -70,19 +60,17 @@ RUN apt-get update \
     libzip4 \
     rsync \
  && rm -rf /var/lib/apt/lists/* \
- # Copy OpenRCT2 files
  && rsync -a /openrct2-install/* / \
  && rm -rf /openrct2-install \
- # Create user and setup directories
- && useradd -d /home/container -m container \
- && mkdir -p /home/container/serverdata/serverfiles/user-data/logs \
-            /home/container/serverdata/serverfiles/saves \
- && touch /home/container/serverdata/serverfiles/user-data/logs/server.log \
- && chown -R container:container /home/container \
- && chmod 775 /home/container/serverdata/serverfiles \
- # Verify OpenRCT2 installation as container user
- && su container -c "openrct2-cli --version" \
- && su container -c "openrct2-cli scan-objects"
+ && openrct2-cli --version \
+ # Create container user and setup directories with proper permissions
+ && useradd -d "$HOME" -m container \
+ && mkdir -p "$HOME/serverdata/serverfiles/"{user-data/logs,saves} \
+ && touch "$HOME/serverdata/serverfiles/user-data/logs/server.log" \
+ && chown -R container:container "$HOME" \
+ && chmod 775 "$HOME/serverdata/serverfiles" \
+ # Test run and scan
+ && openrct2-cli scan-objects
 
 # Copy and setup entrypoint script
 COPY entrypoint.sh /entrypoint.sh
