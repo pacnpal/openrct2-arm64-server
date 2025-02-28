@@ -71,15 +71,17 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && rsync -a /openrct2-install/* / \
  && rm -rf /openrct2-install \
- # Create container user and setup directories with proper permissions
- && useradd -d "$HOME" -m container \
- && mkdir -p "$HOME/serverdata/serverfiles/"{user-data/logs,saves} \
- && touch "$HOME/serverdata/serverfiles/user-data/logs/server.log" \
- && chown -R container:container "$HOME" \
- && chmod 775 "$HOME/serverdata/serverfiles" \
- # Verify installation
+ # Verify OpenRCT2 installation
  && openrct2-cli --version \
- && openrct2-cli scan-objects
+ && openrct2-cli scan-objects \
+ # Create container user
+ && useradd -d /home/container -m container \
+ # Setup directories with proper permissions
+ && mkdir -p /home/container/serverdata/serverfiles/user-data/logs \
+            /home/container/serverdata/serverfiles/saves \
+ && touch /home/container/serverdata/serverfiles/user-data/logs/server.log \
+ && chown -R container:container /home/container \
+ && chmod 775 /home/container/serverdata/serverfiles
 
 # Copy and setup entrypoint script
 COPY entrypoint.sh /entrypoint.sh
