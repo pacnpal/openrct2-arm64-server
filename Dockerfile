@@ -35,6 +35,8 @@ RUN apt-get update \
  # Create container user and setup directories with proper permissions
  && useradd -d /home/container -m container \
  && mkdir -p /home/container \
+            /home/container/serverdata \
+            /home/container/serverdata/serverfiles \
             /home/container/serverdata/serverfiles/user-data \
             /home/container/serverdata/serverfiles/saves \
             /home/container/serverdata/serverfiles/user-data/logs \
